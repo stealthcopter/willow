@@ -24,3 +24,6 @@ ENV PATH="$PATH:/sallow/.local/bin"
 WORKDIR /sallow
 
 ENV ADF_VER="c1e884871872bc748a0248746fcba4980170356f"
+RUN \
+  cd /opt/esp/idf && \
+  curl https://raw.githubusercontent.com/espressif/esp-adf/$ADF_VER/idf_patches/idf_v5.0_freertos.patch | patch -p1

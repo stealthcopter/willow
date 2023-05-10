@@ -5,8 +5,8 @@
 #include "audio_thread.h"
 #include "board.h"
 #include "cJSON.h"
+#include "driver/gptimer.h"
 #include "driver/ledc.h"
-#include "driver/timer.h"
 #include "esp_timer.h"
 #include "esp_err.h"
 #include "esp_http_client.h"
@@ -44,6 +44,11 @@
 #include "timer.h"
 
 #define I2S_PORT I2S_NUM_0
+
+esp_periph_set_handle_t hdl_pset;
+gptimer_handle_t hdl_gpt;
+lv_obj_t *lbl_ln1, *lbl_ln2, *lbl_ln3, *lbl_ln4;
+xQueueHandle hdl_q_timer;
 
 // this is absolutely horrendous but lvgl_port_esp32 requires esp_lcd_panel_io_handle_t and esp-adf does not expose this
 typedef struct periph_lcd {
@@ -147,8 +152,8 @@ static esp_err_t cb_ar_event(audio_rec_evt_t are, void *data)
             break;
         case AUDIO_REC_WAKEUP_START:
             ESP_LOGI(TAG, "AUDIO_REC_WAKEUP_START\n");
-            timer_pause(TIMER_GROUP_0, TIMER_0);
-            timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0);
+            gptimer_stop(hdl_gpt);
+            gptimer_set_raw_count(hdl_gpt, 0);
             lvgl_port_lock(0);
             lv_obj_add_flag(lbl_ln1, LV_OBJ_FLAG_HIDDEN);
             lv_obj_add_flag(lbl_ln2, LV_OBJ_FLAG_HIDDEN);
@@ -189,7 +194,7 @@ static esp_err_t cb_ar_event(audio_rec_evt_t are, void *data)
             lv_label_set_text_static(lbl_ln1, "I heard command:");
             lv_label_set_text(lbl_ln2, command_text);
             lvgl_port_unlock();
-            timer_start(TIMER_GROUP_0, TIMER_0);
+            gptimer_start(hdl_gpt);
 #else
             ESP_LOGI(TAG, "cb_ar_event: unhandled event: '%d'\n", are);
 #endif
@@ -293,7 +298,7 @@ static void hass_post(char *data)
     } else {
         ESP_LOGE(TAG, "failed to read HTTP POST response");
     }
-    timer_start(TIMER_GROUP_0, TIMER_0);
+    gptimer_start(hdl_gpt);
     free(body);
 cleanup:
     esp_http_client_cleanup(hdl_hc);
@@ -463,7 +468,7 @@ static void start_rec()
     }
 
     i2s_stream_cfg_t cfg_is = I2S_STREAM_CFG_DEFAULT();
-    cfg_is.i2s_config.intr_alloc_flags = ESP_INTR_FLAG_LEVEL2 | ESP_INTR_FLAG_IRAM;
+    cfg_is.i2s_config.intr_alloc_flags = (ESP_INTR_FLAG_LOWMED | ESP_INTR_FLAG_SHARED | ESP_INTR_FLAG_INTRDISABLED);
     cfg_is.i2s_config.use_apll = 0;     // not supported on ESP32-S3-BOX
     cfg_is.i2s_port = CODEC_ADC_I2S_PORT;
     cfg_is.out_rb_size = 8 * 1024;      // default is 8 * 1024
@@ -755,24 +760,24 @@ static esp_err_t init_lvgl(void)
     };
     esp_lcd_touch_handle_t hdl_lt;
 
-    ret =  esp_lcd_touch_new_i2c_gt911(lcdp->lcd_io_handle, &cfg_lt, &hdl_lt);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "failed to initialize touch screen: %s", esp_err_to_name(ret));
-        return ret;
-    }
+    // ret =  esp_lcd_touch_new_i2c_gt911(lcdp->lcd_io_handle, &cfg_lt, &hdl_lt);
+    // if (ret != ESP_OK) {
+    //     ESP_LOGE(TAG, "failed to initialize touch screen: %s", esp_err_to_name(ret));
+    //     return ret;
+    // }
 
-    const lvgl_port_touch_cfg_t cfg_pt = {
-        .disp = ld,
-        .handle = hdl_lt,
-    };
+    // const lvgl_port_touch_cfg_t cfg_pt = {
+    //     .disp = ld,
+    //     .handle = hdl_lt,
+    // };
 
-    lv_indev_t *lt = lvgl_port_add_touch(&cfg_pt);
-    lv_indev_enable(lt, true);
+    // lv_indev_t *lt = lvgl_port_add_touch(&cfg_pt);
+    // lv_indev_enable(lt, true);
 
-    LV_IMG_DECLARE(lv_img_hand_left);
-    lv_obj_t *oc = lv_img_create(lv_scr_act());
-    lv_img_set_src(oc, &lv_img_hand_left);
-    lv_indev_set_cursor(lt, oc);
+    // LV_IMG_DECLARE(lv_img_hand_left);
+    // lv_obj_t *oc = lv_img_create(lv_scr_act());
+    // lv_img_set_src(oc, &lv_img_hand_left);
+    // lv_indev_set_cursor(lt, oc);
 
     return ret;
 }
@@ -907,7 +912,7 @@ void app_main(void)
 
     ESP_LOGI(TAG, "Startup complete. Waiting for wake word.");
 
-    ESP_ERROR_CHECK_WITHOUT_ABORT(timer_start(TIMER_GROUP_0, TIMER_0));
+    ESP_ERROR_CHECK_WITHOUT_ABORT(gptimer_start(hdl_gpt));
 
 #ifdef CONFIG_SALLOW_DEBUG_RUNTIME_STATS
     xTaskCreate(&task_debug_runtime_stats, "dbg_runtime_stats", 4 * 1024, NULL, 0, NULL);
