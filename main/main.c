@@ -7,6 +7,7 @@
 #include "cJSON.h"
 #include "driver/ledc.h"
 #include "driver/timer.h"
+#include "esp_timer.h"
 #include "esp_err.h"
 #include "esp_http_client.h"
 #include "esp_lcd_panel_ops.h"
@@ -200,7 +201,7 @@ static esp_err_t cb_ar_event(audio_rec_evt_t are, void *data)
 
 void cb_sntp(struct timeval *tv)
 {
-    ESP_LOGI(TAG, "SNTP client synchronized time to %lu", tv->tv_sec);
+    ESP_LOGI(TAG, "SNTP client synchronized time to %llu", tv->tv_sec);
 }
 
 static int feed_afe(int16_t *buf, int len, void *ctx, TickType_t ticks)
@@ -256,8 +257,7 @@ static void hass_post(char *data)
     n = esp_http_client_read_response(hdl_hc, body, n);
     if (n >= 0) {
         int http_status = esp_http_client_get_status_code(hdl_hc);
-        ESP_LOGI(TAG, "HTTP POST status='%d' content_length='%d'",
-                 http_status, esp_http_client_get_content_length(hdl_hc));
+        //ESP_LOGI(TAG, "HTTP POST status='%d' content_length='%d'",http_status, esp_http_client_get_content_length(hdl_hc));
         if (http_status != 200) {
             ok = false;
             audio_thread_create(NULL, "play_tone_err", play_tone_err, NULL, 4 * 1024, 10, true, 1);
@@ -670,7 +670,7 @@ static esp_err_t init_display(void)
     int ret = ESP_OK;
 
     hdl_lcd = audio_board_lcd_init(hdl_pset, NULL);
-    ret = esp_lcd_panel_disp_off(hdl_lcd, false);
+    ret = esp_lcd_panel_disp_on_off(hdl_lcd, false);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "failed to turn of display: %s", esp_err_to_name(ret));
         return ret;

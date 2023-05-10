@@ -1,4 +1,4 @@
-FROM espressif/idf:release-v4.4
+FROM espressif/idf:v5.0.2
 
 ENV DEBIAN_FRONTEND="noninteractive"
 
@@ -23,7 +23,4 @@ COPY --chown=1000 container.gitconfig /home/build/.gitconfig
 ENV PATH="$PATH:/sallow/.local/bin"
 WORKDIR /sallow
 
-ENV ADF_VER="v2.5"
-RUN \
-  cd /opt/esp/idf && \
-  curl https://raw.githubusercontent.com/espressif/esp-adf/$ADF_VER/idf_patches/idf_v4.4_freertos.patch | patch -p1
+ENV ADF_VER="c1e884871872bc748a0248746fcba4980170356f"

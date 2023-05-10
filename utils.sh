@@ -245,8 +245,9 @@ install|setup)
     mkdir -p deps
     cd deps
     # Setup ADF
-    git clone -b "$ADF_VER" https://github.com/espressif/esp-adf.git
+    git clone https://github.com/espressif/esp-adf.git
     cd $ADF_PATH
+    git checkout $ADF_VER
     git submodule update --init components/esp-adf-libs
 
     cd $SALLOW_PATH
