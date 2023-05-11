@@ -1,0 +1,26 @@
+diff --git a/components/esp_hw_support/gdma.c b/components/esp_hw_support/gdma.c
+index d8a2d86349..8498b57511 100644
+--- a/components/esp_hw_support/gdma.c
++++ b/components/esp_hw_support/gdma.c
+@@ -816,7 +816,7 @@ static esp_err_t gdma_install_rx_interrupt(gdma_rx_channel_t *rx_chan)
+     ret = esp_intr_alloc_intrstatus(gdma_periph_signals.groups[group->group_id].pairs[pair->pair_id].rx_irq_id, isr_flags,
+                                     (uint32_t)gdma_ll_rx_get_interrupt_status_reg(group->hal.dev, pair->pair_id), GDMA_LL_RX_EVENT_MASK,
+                                     gdma_default_rx_isr, rx_chan, &intr);
+-    ESP_GOTO_ON_ERROR(ret, err, TAG, "alloc interrupt failed");
++    ESP_GOTO_ON_ERROR(ret, err, TAG, "alloc interrupt failed: %s", esp_err_to_name(ret));
+     rx_chan->base.intr = intr;
+ 
+     portENTER_CRITICAL(&pair->spinlock);
+diff --git a/components/esp_hw_support/intr_alloc.c b/components/esp_hw_support/intr_alloc.c
+index 40434232ed..88b4c3865e 100644
+--- a/components/esp_hw_support/intr_alloc.c
++++ b/components/esp_hw_support/intr_alloc.c
+@@ -41,7 +41,7 @@ Define this to debug the choices made when allocating the interrupt. This leads
+ output within a critical region, which can lead to weird effects like e.g. the interrupt watchdog
+ being triggered, that is why it is separate from the normal LOG* scheme.
+ */
+-// #define DEBUG_INT_ALLOC_DECISIONS
++#define DEBUG_INT_ALLOC_DECISIONS
+ 
+ #ifdef DEBUG_INT_ALLOC_DECISIONS
+ # define ALCHLOG(...) ESP_EARLY_LOGD(TAG, __VA_ARGS__)
