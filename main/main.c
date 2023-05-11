@@ -688,12 +688,6 @@ static esp_err_t init_display(void)
         return ret;
     }
 
-    ret = ledc_fade_func_install(0);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "failed to install LEDC fade function: %s", esp_err_to_name(ret));
-        return ret;
-    }
-
     return ret;
 }
 
