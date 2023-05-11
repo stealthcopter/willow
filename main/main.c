@@ -659,7 +659,7 @@ static esp_err_t init_display(void)
         .duty = CONFIG_SALLOW_LCD_BRIGHTNESS,
         .gpio_num = GPIO_NUM_45,
         .hpoint = 0,
-        .intr_type = LEDC_INTR_DISABLE,
+        .intr_type = LEDC_INTR_MAX,
         .speed_mode = LEDC_LOW_SPEED_MODE,
         .timer_sel = 1,
     };
