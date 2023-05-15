@@ -153,9 +153,9 @@ esp_err_t init_lvgl_touch(void)
     lv_indev_t *lt = lvgl_port_add_touch(&cfg_pt);
     lv_indev_enable(lt, true);
 
-    LV_IMG_DECLARE(lv_img_hand_left);
+    LV_IMG_DECLARE(lv_img_cursor);
     lv_obj_t *oc = lv_img_create(lv_scr_act());
-    lv_img_set_src(oc, &lv_img_hand_left);
+    lv_img_set_src(oc, &lv_img_cursor);
     lv_indev_set_cursor(lt, oc);
 
     return ret;
