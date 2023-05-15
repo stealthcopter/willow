@@ -7,6 +7,7 @@ RUN \
   --mount=type=cache,target=/var/lib/apt/lists \
   apt-get -qq update && \
   apt-get -qq install \
+  clang-tidy-12 \
 	git \
 	libusb-1.0-0 \
 	nano \
@@ -19,7 +20,8 @@ RUN \
 	sudo \
 	tio
 
-RUN pip install --upgrade pyclang
+RUN --mount=type=cache,target=/opt/esp/dist/ /opt/esp/idf/tools/idf_tools.py install xtensa-clang
+RUN /opt/esp/python_env/idf4.4_py3.8_env/bin/pip install --upgrade pyclang
 
 RUN useradd --create-home --uid 1000 build
 COPY --chown=1000 container.gitconfig /home/build/.gitconfig
