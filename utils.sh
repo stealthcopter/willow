@@ -33,6 +33,12 @@ if [ -f /.dockerenv ]; then
     export container="docker"
 fi
 
+# Set WID (Willow ID)
+if [ -r .willow_id ]; then
+    export WILLOW_ID=`cat .willow_id`
+    echo "Got Willow Group ID $WILLOW_ID"
+fi
+
 # Test for local environment file and use any overrides
 if [ -r .env ]; then
     echo "Using configuration overrides from .env file"
@@ -164,6 +170,13 @@ do_dist() {
     cd "$WILLOW_PATH"
 }
 
+do_wid() {
+    if [ ! -r ".willow_id" ]; then
+        echo "Generating local Willow Group ID for multiple device wake selection..."
+        openssl rand -hex 16 > .willow_id
+    fi
+}
+
 # Some of this may seem redundant but for build, clean, etc we'll probably need to do our own stuff later
 case $1 in
 
@@ -268,7 +281,7 @@ destroy)
     read
     #git reset --hard
     #git clean -fdx
-    sudo rm -rf build/* deps target venv managed_components "$DIST_FILE" components/esp-sr flags/*
+    sudo rm -rf build/* deps target venv managed_components "$DIST_FILE" components/esp-sr flags/* .willow_id
     echo "Not a trace left. You will have to run setup again."
 ;;
 
@@ -318,6 +331,9 @@ serve)
     python3 -m http.server "$SERVE_PORT"
 ;;
 
+wid)
+    do_wid
+;;
 
 *)
     echo "Uknown argument - passing directly to idf.py"

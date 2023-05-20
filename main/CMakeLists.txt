@@ -15,4 +15,8 @@ set(COMPONENT_PRIV_REQUIRES
 )
 register_component()
 
+if(DEFINED ENV{WILLOW_ID})
+	add_definitions(-DWILLOW_ID="$ENV{WILLOW_ID}")
+endif()
+
 spiffs_create_partition_image(audio ../spiffs/audio FLASH_IN_PROJECT)

@@ -9,3 +9,4 @@ target
 willow-dist.bin
 .env
 serve
+.willow_id
